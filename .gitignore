@@ -1,0 +1,5 @@
+*.pyc
+images
+square
+user
+screenshots.sqlite3
