@@ -85,7 +85,7 @@ def download_image(url, filename):
             img_type = 'jpg'
         if not filename.lower().endswith('.%s' % img_type):
             filename += '.%s' % img_type
-        img_file = open('images/%s' % filename)
+        img_file = open('images/%s' % filename, 'w+b')
         img_file.write(uo.read())
         img_file.close()
         return filename
@@ -107,6 +107,7 @@ def download_images(conn, cursor):
                     cursor.execute('update screenshots set original_url=? where original_url=?', (orig_url, old_url))
                     conn.commit()
                     old_url = orig_url
+                    uo.close()
                 except:
                     print 'failed to open %s' % orig_url
             if orig_url.startswith('http://twitpic.com/'):
@@ -123,18 +124,25 @@ def download_images(conn, cursor):
                     bs = BeautifulSoup(uo.read())
                     imgs = bs.findAll('img')
                     img_url = imgs[1]['src']
+                    uo.close()
                     url = download_image(img_url, 'twitpic_%s' % name)
                 except:
                     print 'reading twitpic image failed'
             elif orig_url.startswith('http://yfrog.com/'):
                 try:
-                    print 'yfrog image %s' % orig_url
-                    filename = 'yfrog_' + re.search('http://yfrog.com/(f/)?(\w+)', orig_url).group(2)
+                    print 'yfrog image "%s"' % orig_url
+                    filename = re.search('http://yfrog.com/(f/)?(\w+)', orig_url).group(2)
                     
-                    uo = urllib.urlopen(orig_url)
+                    api_url = 'http://yfrog.com/api/xmlInfo?path=%s' % filename
+                    filename = 'yfrog_' + filename
+                    print 'yfrog api url "%s"' % api_url
+                    uo = urllib.urlopen(api_url)
                     bs = BeautifulSoup(uo.read())
-                    og_image = bs.find('meta', {'property': 'og:image'})
-                    img_url = og_image['content']
+                    #bs = BeautifulSoup(uo.read())
+                    #og_image = bs.find('meta', {'property': 'og:image'})
+                    #img_url = og_image['content']
+                    img_url = bs.find('image_link').contents[0]
+                    uo.close()
                     url = download_image(img_url, filename)
                 except:
                     print 'reading yfrog image failed'
@@ -186,6 +194,7 @@ def download_images(conn, cursor):
                     bs = BeautifulSoup(uo.read())
                     photo = bs.find('img', alt='photo')
                     img_url = photo['src']
+                    uo.close()
                     url = download_image(img_url, filename)
                 except:
                     print 'reading flickr image failed'
@@ -197,6 +206,7 @@ def download_images(conn, cursor):
                     uo = urllib.urlopen(orig_url)
                     bs = BeautifulSoup(uo.read())
                     img_url = bs.find('div', id='image').img['src']
+                    uo.close()
                     url = download_image(img_url, filename)
                 except:
                     print 'reading droplr image failed'
@@ -213,6 +223,7 @@ def download_images(conn, cursor):
                     bs = BeautifulSoup(uo.read())
                     img_url = bs.find('div', {'class': 'imageWrapper'}).img['src']
                     filename = 'owly_' + img_url.split('/')[-1]
+                    uo.close()
                     url = download_image(img_url, filename)
                 except:
                     print 'reading ow.ly image failed'
@@ -224,6 +235,7 @@ def download_images(conn, cursor):
                     bs = BeautifulSoup(uo.read())
                     img_url = bs.find('div', id='original_image_link').a['href']
                     filename = 'brizzly_%s' % img_url.split('/')[-1]
+                    uo.close()
                     url = download_image(img_url, filename)
                 except:
                     print 'reading brizzly image failed'
@@ -235,6 +247,7 @@ def download_images(conn, cursor):
                     bs = BeautifulSoup(uo.read())
                     img_url = bs.find('link', rel='image_src')['href']
                     filename = 'imgur_%s' % img_url.split('/')[-1]
+                    uo.close()
                     url = download_image(img_url, filename)
                 except:
                     print 'reading imgur image failed'
@@ -248,25 +261,27 @@ def download_images(conn, cursor):
                     bs = BeautifulSoup(uo.read())
                     img_url = 'http://dribbble.com' + bs.find('div', id='single-img').img['src']
                     filename = 'dribbble_%s' % orig_url.split('/')[-1]
+                    uo.close()
                     url = download_image(img_url, filename)
                 except:
                     print 'reading dribble image failed'
             
             if not url:
-                try:
-                    uo = urllib.urlopen(orig_url)
-                    mime = uo.info()
-                    if mime.getmaintype() == 'image':# or \
-                       #orig_url.endswith('.png') or orig_url.endswith('.jpg'):
-                        print 'straight up image link %s' % orig_url
-                        img_url = orig_url
-                        filename = 'directlink_' + re.search(r'/([^/]+)$', img_url).group(1)
-                        url = download_image(img_url, filename)
-                    else:
-                        print "couldn't load %s" % orig_url
-                        print 'mimetype: %s' % mime.gettype()
-                except:
-                    print 'loading %s failed' % orig_url
+                    try:
+                        uo = urllib.urlopen(orig_url)
+                        mime = uo.info()
+                        if mime.getmaintype() == 'image':# or \
+                            #orig_url.endswith('.png') or orig_url.endswith('.jpg'):
+                            uo.close()
+                            print 'straight up image link %s' % orig_url
+                            img_url = orig_url
+                            filename = 'directlink_' + re.search(r'/([^/]+)$', img_url).group(1)
+                            url = download_image(img_url, filename)
+                        else:
+                            print "couldn't load %s" % orig_url
+                            print 'mimetype: %s' % mime.gettype()
+                    except:
+                        print 'loading %s failed' % orig_url
 
             if url:
                 print 'updating url %s to %s' % (old_url, url)
