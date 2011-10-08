@@ -1,3 +1,6 @@
+import httplib
+import array
+import json
 import tweepy
 import re
 import sqlite3
@@ -26,6 +29,41 @@ def create_db(conn, cursor):
     except:
         print 'table already created, move on...'
 
+def get_googleplusposts(conn, cursor):
+	print 'Fetching Google+ posts...'
+	posts_conn = httplib.HTTPSConnection("www.googleapis.com")
+	posts_conn.request("GET", "/plus/v1/activities?query=%23screenshotsaturday&orderBy=best&key=AIzaSyBaXu8RnjVNUpxB5ahsIkMcV2VkHUu8bU8&maxResults=20")
+	response = posts_conn.getresponse()
+	if response.status == 200:
+		gdata = response.read()
+		objdata = json.loads(gdata)
+		if objdata:
+			if objdata['items']:
+				for post in objdata['items']:
+					id = post['id']
+					title = post['title']
+					time = post['published']
+					link = post['url']
+					author = post['actor']['displayName']
+					authorlink = post['actor']['url']
+					authoravatar = post['actor']['image']['url']					
+					
+					print "User: %s" % author.encode('ascii', 'ignore')
+					print "Post: %s" % title.encode('ascii', 'ignore')
+					
+					cursor.execute('select tweet_id from screenshots where tweet_id = ?', (id,))
+					row = cursor.fetchone()
+					if row:
+						print "already read these posts. bailing out"
+						#quit_out = True
+						continue
+						
+					for num,url in enumerate(re.findall(url_regex, title)):
+						print "extracting url " + str(num + 1) + ": " + url
+					#url = url.group(1)					
+					
+		#print objdata
+			
 def get_tweets(conn, cursor):
     previous_last_id = ''
     last_id = ''
@@ -411,6 +449,7 @@ def main():
     
     create_db(conn, cursor)
     get_tweets(conn, cursor)
+    get_googleplusposts(conn,cursor)
     download_images(conn, cursor)
     generate_thumbnails()
     delete_duplicates(conn, cursor)
