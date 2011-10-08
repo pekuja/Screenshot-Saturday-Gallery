@@ -37,16 +37,16 @@
 		#weekname { tex-align:center; width:500px; margin-top:50px; line-height:24px; margin-left:-250px; left:50%; position:absolute; text-decoration:none; color:#000; font-weight:bold; font-family:verdana; font-size:16px; }
     </style>
 	
-	<link href="assets/SqueezeBox.css" rel="stylesheet" type="text/css" />
+	<link href="./milkbox/milkbox.css" rel="stylesheet" type="text/css" />
     
     <script type="text/javascript" src="./mootools.1.3.1.js"></script>
 	<script type="text/javascript" src="./mootools.more.1.3.1.1.js"></script>
-	<script type="text/javascript" src="./SqueezeBox.js"></script>
+	<script type="text/javascript" src="./milkbox/milkbox-yc.js"></script>
 	
 	<script type="text/javascript">
 		window.addEvent( 'domready' , function() {
 		
-			SqueezeBox.assign($$('a[rel=boxed]'));
+			var milkbox = new Milkbox({ resizeTransition:'back:out', topPosition:30, centered:true });
 			
 			$('selector').setStyle('opacity', 0);
 			//$('textbar').setStyle('opacity', 0);
@@ -128,7 +128,7 @@
 {% comment %} {% if prev_page %}
 	<a href="{{ prev_page }}" ><img src="./prev.png" rel="" alt='View the week before this, screenshots from week #{{ week_num|add:"-1" }}'/></a>
 {% endif %} {% endcomment %}
-	<a href="./aboutinfo.jpg" rel="boxed" ><img src="./about.png" rel="" alt='View information about #screenshotsaturday and who runs it.'/></a>
+	<a href="./aboutinfo.jpg" data-milkbox="single" ><img src="./about.png" rel="" alt='View information about #screenshotsaturday and who runs it.'/></a>
 {% comment %} {% if next_page %}
 	<a href="{{ next_page }}" ><img src="./next.png" rel="" alt='View the week after this, screenshots from week #{{ week_num|add:"1" }}'/></a>
 {% endif %} {% endcomment %}
