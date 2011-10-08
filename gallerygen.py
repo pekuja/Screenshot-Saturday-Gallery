@@ -70,7 +70,7 @@ def get_tweets(conn, cursor):
     page_num = 1
     while page_num < 1600/tweets_per_page:
         print "reading page %s" % page_num 
-        tweets = tweepy.api.search(tag, rpp=tweets_per_page, page=page_num)
+        tweets = tweepy.api.search(tag, rpp=tweets_per_page, page=page_num, include_entities=True)
         quit_out = False
         if last_id == '':
             last_id = tweets[0].id_str
@@ -85,22 +85,42 @@ def get_tweets(conn, cursor):
                 print "already read these. bailing out"
                 #quit_out = True
                 continue
-            
+               
             # Ignore retweets
             if re.search(retweet_regex, tweet.text):
                 print "Retweet. Ignoring."
                 continue
+                
+            if 'urls' in tweet.entities:
+                for url in tweet.entities['urls']:
+                    real_url = url['url']
+                    if 'expanded_url' in url:
+                        real_url = url['expanded_url']
+                    if not '://' in real_url:
+                        real_url = 'http://' + real_url
+                    cursor.execute('''insert into screenshots values (?, ?, ?, ?, ?, NULL, NULL)''',
+                        (tweet.id, tweet.from_user, tweet.created_at, real_url, tweet.text))
+                    conn.commit()
+                    
+            if 'media' in tweet.entities:
+                for media in tweet.entities['media']:
+                    cursor.execute('''insert into screenshots values (?, ?, ?, ?, ?, NULL, NULL)''',
+                        (tweet.id, tweet.from_user, tweet.created_at, media['media_url'], tweet.text))
+                    conn.commit()
+            
+                
+            
             
             # Extract URL
             #url = re.search(url_regex, tweet.text)
-            for num,url in enumerate(re.findall(url_regex, tweet.text)):
-                print "extracting url " + str(num + 1) + ": " + url
-                #url = url.group(1)
-                cursor.execute('''insert into screenshots
-                               values (?, ?, ?, ?, ?, NULL, NULL)''',
-                               (tweet.id, tweet.from_user,
-                               tweet.created_at, url, tweet.text))
-                conn.commit()
+            #for num,url in enumerate(re.findall(url_regex, tweet.text)):
+            #    print "extracting url " + str(num + 1) + ": " + url
+            #    #url = url.group(1)
+            #    cursor.execute('''insert into screenshots
+            #                   values (?, ?, ?, ?, ?, NULL, NULL)''',
+            #                   (tweet.id, tweet.from_user,
+            #                   tweet.created_at, url, tweet.text))
+            #    conn.commit()
                                     
         page_num += 1
         
