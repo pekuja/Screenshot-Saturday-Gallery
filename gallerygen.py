@@ -58,7 +58,7 @@ def get_tweets(conn, cursor):
                     real_url = url['url']
                     if 'expanded_url' in url:
                         real_url = url['expanded_url']
-                    if not real_url.contains('://'):
+                    if not '://' in real_url:
                         real_url = 'http://' + real_url
                     cursor.execute('''insert into screenshots values (?, ?, ?, ?, ?, NULL, NULL)''',
                         (tweet.id, tweet.from_user, tweet.created_at, real_url, tweet.text))
