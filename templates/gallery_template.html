@@ -137,7 +137,7 @@
 <div id="weekname" align="center"> You are viewing week {{ week_num }} of #screenshotsaturday <br /> The Saturday of {{ saturday }} <br /> {{ screenshots|length }} screenshots </div> 
 
 <div id="screenshots">
-    {% for screen in screenshots %}<a href="images/{{ screen.2|urlencode }}" title='Submitted by <a href=&quot;http://twitter.com/{{ screen.0|escape }}&quot;>@{{ screen.0|escape }}</a>      {{ screen.1|escape|urlize }}' data-milkbox="gall1">
+    {% for screen in screenshots %}<a href="images/{{ screen.2|urlencode }}" data-milkbox="gall1">
 		<img src="square/{{ screen.2|urlencode }}" rel="<a href=&quot;http://twitter.com/{{ screen.0|escape }}&quot;>@{{ screen.0|escape }}</a>" alt='{{ screen.1|escape|urlize }}'/></a
     >{% endfor %}
 </div>
